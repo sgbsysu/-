@@ -6,8 +6,8 @@ from sklearn.svm import SVC
 import os
 import random
 
-if (os.path.exists('../result_svm') == False):
-    os.mkdir('../result_svm')
+if (os.path.exists('../result_svm_M1') == False):
+    os.mkdir('../result_svm_M1')
 
 #加载文件路径
 train_xy_csv = '../data_model/train_xy.csv'
@@ -38,6 +38,22 @@ def loadData():
 #     result.uid=test_uid
 #     result.score = test_y[:,1]
 #     result.to_csv('../result/result_SVM_2.csv',index=None,encoding='utf-8')
+def average_result():
+    files = os.listdir('../result_svm_M1')
+    pred = pd.read_csv('../result_svm_M1/' + files[0])
+
+    uid = pred.uid
+    score = pred.score
+
+    for f in files[1:]:
+        pred = pd.read_csv('../result_svm_M1/'+f)
+        score += pred.score
+    avg_score = score/len(files)
+
+    result_svm_M1 = pd.DataFrame(uid,columns=["uid"])
+    result_svm_M1["score"] = avg_score
+
+    result_svm_M1.to_csv('../result_svm_M1/result_svm_M1.csv',index=None,encoding='utf-8')
 
 def pipeLine(iteration,C,gamma,random_seed):
     X,y,test_x,test_uid = loadData()
@@ -47,17 +63,19 @@ def pipeLine(iteration,C,gamma,random_seed):
     test_result = pd.DataFrame(columns=["uid","score"])
     test_result.uid=test_uid
     test_result.score = pred[:,1]
-    test_result.to_csv('../result/svm_pred{0}.csv'.format(iteration),index=None,encoding='utf-8')
+    test_result.to_csv('../result_svm_M1/svm_pred{0}.csv'.format(iteration),index=None,encoding='utf-8')
 
 def testSVM():
     random_seed = range(1024,2048)
-    C = [i/10 for i in range(10,20)]
-    gamma = [i/1000.0 for i in range(1,11)]
+    C = [i/10 for i in range(10,40)]
+    gamma = [i/1000.0 for i in range(1,31)]
     random.shuffle(random_seed)
     random.shuffle(C)
     random.shuffle(gamma)
     for i in range(10):
         pipeLine(i,C[i],gamma[i],random_seed[i])
+    average_result()
+
 
 testSVM()
 
